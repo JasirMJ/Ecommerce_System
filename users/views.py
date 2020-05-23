@@ -273,7 +273,6 @@ class UserDetailsView(ListAPIView):
                 }
             )
         elif keyword=="add_assistant":
-
             serializer = UserDetailsSerializers(UserDetails.objects.filter(user=id).first(), data=self.request.data,
                                                 partial=True)
             serializer.is_valid(raise_exception=True)
