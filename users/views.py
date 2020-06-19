@@ -1,12 +1,13 @@
-
-from EcommerceSystem.global_variables import *
 from EcommerceSystem.Imports import *
 from users.serializers import *
+from Shops.models import ShopDetails
+
 
 def index(request):
     return HttpResponse('Welcome to Ecommerce , site is under developement')
 
 class UsersView(ListAPIView):
+
     serializer_class = UserSerializers
     authentication_classes = (TokenAuthentication,)
 
@@ -15,19 +16,11 @@ class UsersView(ListAPIView):
             STATUS:True,
             MESSAGE:"GET method not allowed"
         })
-    # def get_queryset(self):
-    #     id = self.request.GET.get('id','')
-    #
-    #     if id :
-    #         queryset = User.objects.filter(id=id)
-    #     else:
-    #         queryset = User.objects.all()
-    #     return queryset
 
     def post(self,request):
         serializer = UserSerializers(data=request.data)
         serializer.is_valid(raise_exception=True)
-        obj = serializer.save(password=make_password(self.request.data['password']))
+        obj = serializer.save(password=make_password(self.request.data['password']),is_active= True)
         print("user id or object : ",obj.id)
 
         return Response(
@@ -76,8 +69,6 @@ class UsersView(ListAPIView):
             }
         )
 
-
-
     def delete(self,request):
         try:
             id = self.request.POST.get('id', "")
@@ -108,6 +99,7 @@ class UsersView(ListAPIView):
                     "line_no": printLineNo()
                 }
             )
+
 
 class UserDetailsView(ListAPIView):
     serializer_class = UserDetailsSerializers
@@ -153,7 +145,7 @@ class UserDetailsView(ListAPIView):
             serializer = UserDetailsSerializers(data=request.data,partial=True)
             serializer.is_valid(raise_exception=True)
             # serializer.is_valid(raise_exception=True)
-            obj = serializer.save(user_id=self.request.POST['id'])
+            obj = serializer.save(user=self.request.user)
             print("Data id or object : ",obj.id)
 
             return Response(
@@ -184,81 +176,8 @@ class UserDetailsView(ListAPIView):
                 MESSAGE:"Required object id as id"
             })
 
-        if keyword =="add_role":
-            if self.request.user.is_superuser:
-                role_id = self.request.POST.get("role_id","")
-                if not role_id or role_id == "":
-                    return Response({
-                        STATUS: False,
-                        MESSAGE: "Required role_id"
-                    })
-                UserDetails.objects.get(user=id).role.add(UserRoles.objects.get(id=role_id))
-                return Response({
-                    STATUS:True,
-                    MESSAGE:"New role added"
-                })
-            else:
-                return Response({
-                    STATUS: False,
-                    MESSAGE: "Only admin can change it"
-                })
-        elif keyword =="remove_role":
-            if self.request.user.is_superuser:
 
-                role_id = self.request.POST.get("role_id", "")
-                if not role_id or role_id == "":
-                    return Response({
-                        STATUS: False,
-                        MESSAGE: "Required role_id"
-                    })
-                UserDetails.objects.get(user=id).role.remove(UserRoles.objects.get(id=role_id))
-                return Response({
-                    STATUS: True,
-                    MESSAGE: "Role removed"
-                })
-            else:
-                return Response({
-                    STATUS: False,
-                    MESSAGE: "Only admin can change it"
-                })
-        elif keyword =="add_page":
-            UserDetails.objects.get(created_by=self.request.user.id)
-            if self.request.user.is_superuser:
-                page_id = self.request.POST.get("page_id", "")
-                if not page_id or page_id == "":
-                    return Response({
-                        STATUS: False,
-                        MESSAGE: "Required page_id"
-                    })
-                UserDetails.objects.get(user=id).pages.add(Pages.objects.get(id=page_id))
-                return Response({
-                    STATUS: True,
-                    MESSAGE: "Page added"
-                })
-            else:
-                return Response({
-                    STATUS: False,
-                    MESSAGE: "Only admin can change it"
-                })
-        elif keyword =="remove_page":
-            if self.request.user.is_superuser:
-                page_id = self.request.POST.get("page_id", "")
-                if not page_id or page_id == "":
-                    return Response({
-                        STATUS: False,
-                        MESSAGE: "Required page_id"
-                    })
-                UserDetails.objects.get(user=id).pages.remove(Pages.objects.get(id=page_id))
-                return Response({
-                    STATUS: True,
-                    MESSAGE: "Page removed"
-                })
-            else:
-                return Response({
-                    STATUS: False,
-                    MESSAGE: "Only admin can change it"
-                })
-        elif keyword =="generate_string":
+        if keyword =="generate_string":
             value = get_random_alphaNumeric_string()
             serializer = UserDetailsSerializers(UserDetails.objects.filter(user=id).first(),data=self.request.data ,
                                                 partial=True)
@@ -269,19 +188,6 @@ class UserDetailsView(ListAPIView):
                 {
                     STATUS: True,
                     MESSAGE: "Data updated",
-                    # "Data": request.data
-                }
-            )
-        elif keyword=="add_assistant":
-            serializer = UserDetailsSerializers(UserDetails.objects.filter(user=id).first(), data=self.request.data,
-                                                partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save(referance=None,created_by=User.objects.get(id=self.request.user.id))
-
-            return Response(
-                {
-                    STATUS: True,
-                    MESSAGE: "assistant added",
                     # "Data": request.data
                 }
             )
@@ -329,6 +235,7 @@ class UserDetailsView(ListAPIView):
                 }
             )
 
+
 class AddressView(ListAPIView):
     serializer_class = AddressSerializers
     authentication_classes = (TokenAuthentication,)
@@ -339,41 +246,18 @@ class AddressView(ListAPIView):
             STATUS:True,
             MESSAGE:"GET not allowed"
         })
-    # def get_queryset(self):
-    #     if self.request.user.is_superuser:
-    #         queryset = Address.objects.all()
-    #     else:
-    #         obj = UserDetails.objects.none()
-    #     return queryset
+
 
     def post(self,request):
-        id = ""
-
-        user = self.request.POST.get("user")
-        # print(UserDetails.objects.get(user=user))
-        if not user or user == "":
-            return Response({
-                STATUS: False,
-                MESSAGE: "Required user"
-            })
 
         try:
-            if not User.objects.filter(id=user).exists():
-                return Response({
-                    STATUS:False,
-                    MESSAGE:"Unauthorised access"
-                })
 
             serializer = AddressSerializers(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            obj = serializer.save()
+            obj = serializer.save(user= request.user)
             print("Data id or object : ",obj.id)
             id = obj.id
-
-            UserDetails.objects.get(user=user).address.add(obj)
-
-            # address.add(obj)
 
             return Response(
                 {
@@ -382,11 +266,8 @@ class AddressView(ListAPIView):
                 }
             )
         except Exception as e:
-            if id:
-                Address.objects.get(id=id).delete()
 
             printLineNo()
-            print("type :",type(e))
 
             return JsonResponse(
                 {
@@ -449,86 +330,6 @@ class AddressView(ListAPIView):
                 }
             )
 
-class PagesView(ListAPIView):
-    serializer_class = PagesSerializers
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        queryset = Pages.objects.all()
-        return queryset
-
-    def post(self,request):
-        try:
-            serializer = PagesSerializers(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            # serializer.is_valid(raise_exception=True)
-            obj = serializer.save()
-            print("Data id or object : ",obj.id)
-            return Response(
-                {
-                    STATUS: True,
-                    MESSAGE:"Data created "+str(obj.id)
-                }
-            )
-        except Exception as e:
-            printLineNo()
-            return JsonResponse(
-                {
-                    STATUS: False,
-                    MESSAGE: e.detail,
-                    "line_no": printLineNo()
-                }
-            )
-
-    def put(self,request):
-        id = self.request.POST.get("id")
-        if not id or id =="":
-            return Response({
-                STATUS:False,
-                MESSAGE:"Required object id as id"
-            })
-        serializer = PagesSerializers(UserDetails.objects.filter(id=id).first(), data=request.data,partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            {
-                STATUS: True,
-                MESSAGE: "Data updated",
-                # "Data": request.data
-            }
-        )
-
-    def delete(self,request):
-        try:
-            id = self.request.POST.get('id', "")
-            if id == "" or not id:
-                Pages.objects.all().delete()
-                return Response(
-                    {
-                        STATUS: True,
-                        MESSAGE: "Deleted all data",
-                    }
-                )
-            else:
-                id = json.loads(id)
-                print(id)
-                Pages.objects.filter(id__in=id).delete()
-                return Response(
-                    {
-                        STATUS: True,
-                        MESSAGE: "Deleted data having id " + str(id),
-                    }
-                )
-        except Exception as e:
-            printLineNo()
-            return Response(
-                {
-                    STATUS: False,
-                    MESSAGE: str(e),
-                    "line_no": printLineNo()
-                }
-            )
 
 class UsersRoleView(ListAPIView):
     serializer_class = UserRolesSerializers
@@ -542,10 +343,18 @@ class UsersRoleView(ListAPIView):
     def post(self,request):
         try:
 
+            shop_id = request.POST["shop_id"]
+            obj_shop = ShopDetails.objects.get(id= shop_id)
+
+            if request.user != obj_shop.super_manager:
+                return JsonResponse(getValErrorDict("you are not the owner of this shop",))
+
+            user_id = request.POST["user_id"]
+            obj_user = User.objects.filter(id= user_id)
+
             serializer = UserRolesSerializers(data=request.data)
             serializer.is_valid(raise_exception=True)
-            # serializer.is_valid(raise_exception=True)
-            obj = serializer.save()
+            obj = serializer.save(user= obj_user,shop= obj_shop)
             print("user id or object : ",obj.id)
 
             return Response(
@@ -572,9 +381,20 @@ class UsersRoleView(ListAPIView):
                 MESSAGE:"Required product id as id"
             })
 
+        shop_id = request.POST["shop_id"]
+        obj_shop = ShopDetails.objects.get(id=shop_id)
+
+        if request.user != obj_shop.super_manager:
+            return JsonResponse(getValErrorDict("you are not the owner of this shop", ))
+
+        user_id = request.POST["user_id"]
+        obj_user = User.objects.filter(id=user_id)
+
+
+
         serializer = UserRolesSerializers(UserRoles.objects.filter(id=id).first(), data=request.data,partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(shop = obj_shop,user= obj_user)
 
         return Response(
             {

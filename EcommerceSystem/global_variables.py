@@ -1,5 +1,4 @@
 
-
 '''Declaring some Global Variable'''
 import sys
 
@@ -17,6 +16,9 @@ ACTION = "Action"
 LINE_NO = "Line_no"
 SALES = "sales"
 PURCHASES = "purchases"
+DELIVERY = "delivery"
+ORDER_MANAGEMENT = "order_management"
+STOCK_MANAGEMENT = "stock_management"
 
 def generateId(key,value):
     n = value # will be the last id from table
@@ -64,3 +66,41 @@ def get_random_alphaNumeric_string(stringLength=8):
 
 
 print(get_random_alphaNumeric_string())
+
+
+def getErrorDict(message,error):
+    d = {
+        MESSAGE : message,
+        ERROR : error,
+        STATUS : False
+    }
+    return d
+
+def getSuccessDict(message,additional = {}):
+    d = {
+        MESSAGE : message,
+        STATUS : True
+    }
+    d.update(additional)
+    return d
+
+def getValErrorDict(message, additional = {}):
+    d = {
+        MESSAGE: "Validation error occured",
+        ERROR : message,
+        STATUS: False
+    }
+    d.update(additional)
+    return d
+
+
+lst_string_bool_values_without_blank = ["true","false"]
+lst_string_bool_values_with_blank = ["true","false",""]
+
+def get_bool_of_string(value):
+    if value == "":
+        return ""
+    if value == "true":
+        return True
+    if value == "false":
+        return False

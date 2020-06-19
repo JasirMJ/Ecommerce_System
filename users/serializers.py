@@ -1,9 +1,15 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers, exceptions
+from .models import *
 
 from EcommerceSystem.Imports import *
 
 User._meta.get_field('email')._unique = True
+
+class UserSerializerSimple(DynamicFieldsModelSerializer):
+    class Meta:
+        model = User
+        fields = ["first_name","last_name","email"]
 
 class UserSerializers(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -15,7 +21,8 @@ class UserSerializers(serializers.ModelSerializer):
 
 
 class UserRolesSerializers(serializers.ModelSerializer):
-    # password = serializers.CharField(write_only=True)
+
+    user = UserSerializers()
 
     class Meta:
         model = UserRoles
@@ -27,19 +34,11 @@ class AddressSerializers(serializers.ModelSerializer):
         model = Address
         fields = '__all__'
 
-class PagesSerializers(serializers.ModelSerializer):
-    # password = serializers.CharField(write_only=True)
-    class Meta:
-        model = Pages
-        fields = '__all__'
-
 
 
 class UserDetailsSerializers(serializers.ModelSerializer):
-    user = UserSerializers()
-    role = UserRolesSerializers(many=True)
-    address = AddressSerializers(many=True)
-    pages = PagesSerializers(many=True)
+
+    user = UserSerializers(read_only= True,many= False)
 
     class Meta:
         model = UserDetails
