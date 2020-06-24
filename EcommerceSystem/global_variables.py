@@ -104,3 +104,10 @@ def get_bool_of_string(value):
         return True
     if value == "false":
         return False
+
+def getFloatOfObject(obj):
+
+    try:
+        return float(obj)
+    except:
+        return 0
