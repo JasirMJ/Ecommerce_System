@@ -45,8 +45,6 @@ def whoami(request):
     print("id :", userid)
     return 0
 
-def printCreate(module):
-    return print(module," : created ")
 
 def printUpdated(module):
     return print(module," : updated ")
